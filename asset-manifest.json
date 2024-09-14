@@ -1,0 +1,15 @@
+{
+  "files": {
+    "main.css": "/music-trainer/static/css/main.337206fd.css",
+    "main.js": "/music-trainer/static/js/main.46734a89.js",
+    "static/js/453.04bba4a8.chunk.js": "/music-trainer/static/js/453.04bba4a8.chunk.js",
+    "index.html": "/music-trainer/index.html",
+    "main.337206fd.css.map": "/music-trainer/static/css/main.337206fd.css.map",
+    "main.46734a89.js.map": "/music-trainer/static/js/main.46734a89.js.map",
+    "453.04bba4a8.chunk.js.map": "/music-trainer/static/js/453.04bba4a8.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.337206fd.css",
+    "static/js/main.46734a89.js"
+  ]
+}

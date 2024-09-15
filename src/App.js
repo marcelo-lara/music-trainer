@@ -1,102 +1,12 @@
-import React, { useEffect, useState } from 'react';
-import Vex from 'vexflow';
-import './App.css'; // For custom styles
+import React, { useEffect, useState } from "react";
+import Vex from "vexflow";
+import './App.css';
 
-function App() {
-  const [randomNote, setRandomNote] = useState(null);
+const MusicTrainer = () => {
+  const [randomNote, setRandomNote] = useState("");
+  const [midiNote, setMidiNote] = useState(null);
 
-  useEffect(() => {
-    if (randomNote) {
-      const VF = Vex.Flow;
-      const div = document.getElementById("staff");
-  
-      // Clear the previous SVG content (in case of re-renders)
-      div.innerHTML = "";
-  
-      const renderer = new VF.Renderer(div, VF.Renderer.Backends.SVG);
-      renderer.resize(500, 400); // Adjust height for both treble and bass staves
-  
-      const context = renderer.getContext();
-  
-      // Treble Clef (Top stave)
-      const trebleStave = new VF.Stave(10, 40, 400);
-      trebleStave.addClef("treble").addTimeSignature("4/4");
-      trebleStave.setContext(context).draw();
-  
-      // Bass Clef (Bottom stave)
-      const bassStave = new VF.Stave(10, 140, 400);
-      bassStave.addClef("bass").addTimeSignature("4/4");
-      bassStave.setContext(context).draw();
-  
-      // Determine clef based on the octave in the randomNote
-      const [noteName, octave] = randomNote.split("/");
-  
-      let clef = "";
-      if (parseInt(octave) >= 4) {
-        clef = "treble"; // Use treble clef for octave 4 and above
-      } else {
-        clef = "bass"; // Use bass clef for octave 3 and below
-      }
-  
-      // Create a StaveNote object with the random note
-      const note = new VF.StaveNote({
-        clef: clef,
-        keys: [randomNote],
-        duration: "q"
-      });
-  
-      // Add rests to fill the measure (4 beats total in 4/4 for both staves)
-      const rest1 = new VF.StaveNote({
-        clef: clef,
-        keys: ["b/4"],
-        duration: "qr"
-      });
-  
-      const rest2 = new VF.StaveNote({
-        clef: clef,
-        keys: ["b/4"],
-        duration: "qr"
-      });
-  
-      const rest3 = new VF.StaveNote({
-        clef: clef,
-        keys: ["b/4"],
-        duration: "qr"
-      });
-  
-      const voice = new VF.Voice({ num_beats: 4, beat_value: 4 });
-      voice.addTickables([note, rest1, rest2, rest3]);
-  
-      // Format and justify the notes to 400 pixels
-      const formatter = new VF.Formatter()
-        .joinVoices([voice])
-        .format([voice], 400);
-  
-      // Render the voice on the appropriate stave
-      if (clef === "treble") {
-        voice.draw(context, trebleStave);
-      } else {
-        voice.draw(context, bassStave);
-      }
-  
-      // Draw a brace to connect the treble and bass staves
-      const brace = new VF.StaveConnector(trebleStave, bassStave);
-      brace.setType(VF.StaveConnector.type.BRACE);
-      brace.setContext(context).draw();
-  
-      // Draw the vertical bar to connect the staves
-      const lineLeft = new VF.StaveConnector(trebleStave, bassStave);
-      lineLeft.setType(VF.StaveConnector.type.SINGLE_LEFT);
-      lineLeft.setContext(context).draw();
-  
-      // Draw the right bar at the end of both staves
-      const lineRight = new VF.StaveConnector(trebleStave, bassStave);
-      lineRight.setType(VF.StaveConnector.type.SINGLE_RIGHT);
-      lineRight.setContext(context).draw();
-    }
-  }, [randomNote]);
-
-  // Function to generate a random note from C4 to C6
+  // Generate a random note function (already defined in your app)
   const generateRandomNote = () => {
     const notes = [];
     const noteNames = ["c", "d", "e", "f", "g", "a", "b"];
@@ -111,15 +21,130 @@ function App() {
     setRandomNote(notes[randomIndex]);
   };
 
+  // MIDI Input handler
+  const handleMIDIInput = (midiAccess) => {
+    const inputs = midiAccess.inputs.values();
+    for (let input of inputs) {
+      input.onmidimessage = handleMIDIMessage;
+    }
+  };
+
+  const handleMIDIMessage = (message) => {
+    const [status, note, velocity] = message.data;
+    if (status === 144 && velocity > 0) {
+      const noteName = convertMIDINoteToNoteName(note);
+      setMidiNote(noteName);
+    }
+  };
+
+  const convertMIDINoteToNoteName = (midiNoteNumber) => {
+    const noteNames = ["c", "c#", "d", "d#", "e", "f", "f#", "g", "g#", "a", "a#", "b"];
+    const octave = Math.floor(midiNoteNumber / 12) - 1;
+    const noteIndex = midiNoteNumber % 12;
+    return `${noteNames[noteIndex]}/${octave}`;
+  };
+
+  // Compare the MIDI input with the displayed random note
+  useEffect(() => {
+    if (midiNote && randomNote === midiNote) {
+      // If the note matches, generate a new random note
+      generateRandomNote();
+    }
+  }, [midiNote, randomNote]);
+
+  useEffect(() => {
+    // Set up Web MIDI API
+    if (navigator.requestMIDIAccess) {
+      navigator.requestMIDIAccess().then(handleMIDIInput).catch(console.error);
+    } else {
+      console.error("Web MIDI API is not supported in this browser.");
+    }
+  }, []);
+
+  // Render the music stave (as already defined in your app)
+  useEffect(() => {
+    if (randomNote) {
+      const VF = Vex.Flow;
+      const div = document.getElementById("staff");
+
+      // Clear previous SVG content
+      div.innerHTML = "";
+
+      const renderer = new VF.Renderer(div, VF.Renderer.Backends.SVG);
+      renderer.resize(500, 400);
+
+      const context = renderer.getContext();
+
+      // Treble Clef
+      const trebleStave = new VF.Stave(10, 40, 400);
+      trebleStave.addClef("treble").addTimeSignature("4/4");
+      trebleStave.setContext(context).draw();
+
+      // Bass Clef
+      const bassStave = new VF.Stave(10, 140, 400);
+      bassStave.addClef("bass").addTimeSignature("4/4");
+      bassStave.setContext(context).draw();
+
+      // Determine the clef based on the octave of randomNote
+      const [noteName, octave] = randomNote.split("/");
+      let clef = parseInt(octave) >= 4 ? "treble" : "bass";
+
+      // Create a StaveNote for the random note
+      const note = new VF.StaveNote({
+        clef: clef,
+        keys: [randomNote],
+        duration: "q",
+      });
+
+      // Add rests to fill measure
+      const rest = new VF.StaveNote({
+        clef: clef,
+        keys: ["b/4"],
+        duration: "qr",
+      });
+
+      const voice = new VF.Voice({ num_beats: 4, beat_value: 4 });
+      voice.addTickables([note, rest, rest, rest]);
+
+      // Format and justify the notes to 400 pixels
+      const formatter = new VF.Formatter().joinVoices([voice]).format([voice], 400);
+
+      // Draw notes on appropriate stave
+      if (clef === "treble") {
+        voice.draw(context, trebleStave);
+      } else {
+        voice.draw(context, bassStave);
+      }
+
+      // Draw a brace and connectors between the two staves
+      const brace = new VF.StaveConnector(trebleStave, bassStave);
+      brace.setType(VF.StaveConnector.type.BRACE);
+      brace.setContext(context).draw();
+
+      const lineLeft = new VF.StaveConnector(trebleStave, bassStave);
+      lineLeft.setType(VF.StaveConnector.type.SINGLE_LEFT);
+      lineLeft.setContext(context).draw();
+
+      const lineRight = new VF.StaveConnector(trebleStave, bassStave);
+      lineRight.setType(VF.StaveConnector.type.SINGLE_RIGHT);
+      lineRight.setContext(context).draw();
+    }
+  }, [randomNote]);
+
   return (
-    <div className="App">
+    <div>
       <h1>Music Trainer</h1>
       <button onClick={generateRandomNote}>Generate Random Note</button>
-      <div className="staff-container">
-        <div id="staff"></div>
+      
+      {/* Staff container */}
+      <div id="staff"></div>
+      
+      {/* MIDI received note display */}
+      <div className="midi-note">
+        {midiNote && <p>Last MIDI Note Played: {midiNote}</p>}
       </div>
     </div>
   );
-}
+};
 
-export default App;
+export default MusicTrainer;

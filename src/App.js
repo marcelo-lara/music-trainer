@@ -174,7 +174,7 @@ useEffect(() => {
 
       {/* Display MIDI note, color red if incorrect */}
       <div className={`midi-note ${isNoteCorrect === false ? 'incorrect' : ''}`}>
-        {midiNote && <p>Last MIDI Note Played: {midiNote}</p>}
+        {(!isNoteCorrect) && midiNote && <p>Note Played: {midiNote}</p>}
         {/* After 3 attempts, display the generated note */}
         {showGeneratedNote && <p className="generated-note">Note: {randomNote}</p>}
       </div>

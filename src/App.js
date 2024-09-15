@@ -43,6 +43,13 @@ const MusicTrainer = () => {
     }
   };
 
+  const convertMIDINoteToNoteName = (midiNoteNumber) => {
+    const noteNames = ["c", "c#", "d", "d#", "e", "f", "f#", "g", "g#", "a", "a#", "b"];
+    const octave = Math.floor(midiNoteNumber / 12) - 1;
+    const noteIndex = midiNoteNumber % 12;
+    return `${noteNames[noteIndex]}/${octave}`;
+  };
+
 useEffect(() => {
 
   if(!midiNote) return;
@@ -61,12 +68,6 @@ useEffect(() => {
   
 }, [midiNote]);
 
-  const convertMIDINoteToNoteName = (midiNoteNumber) => {
-    const noteNames = ["c", "c#", "d", "d#", "e", "f", "f#", "g", "g#", "a", "a#", "b"];
-    const octave = Math.floor(midiNoteNumber / 12) - 1;
-    const noteIndex = midiNoteNumber % 12;
-    return `${noteNames[noteIndex]}/${octave}`;
-  };
 
   useEffect(() => {
     // Set up Web MIDI API
@@ -110,7 +111,7 @@ useEffect(() => {
       bassStave.setContext(context).draw();
 
       // Determine the clef based on the octave of randomNote
-      const [noteName, octave] = randomNote.split("/");
+      const [, octave] = randomNote.split("/");
       let clef = parseInt(octave) >= 4 ? "treble" : "bass";
 
       // Create a StaveNote for the random note
@@ -131,7 +132,7 @@ useEffect(() => {
       voice.addTickables([note, rest, rest, rest]);
 
       // Format and justify the notes to 400 pixels
-      const formatter = new VF.Formatter().joinVoices([voice]).format([voice], 400);
+      new VF.Formatter().joinVoices([voice]).format([voice], 400);
 
       // Draw notes on appropriate stave
       if (clef === "treble") {

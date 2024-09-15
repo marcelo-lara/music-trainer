@@ -8,6 +8,9 @@ const MusicTrainer = () => {
   const [isNoteCorrect, setIsNoteCorrect] = useState(null);
   const [attempts, setAttempts] = useState(0);
   const [showGeneratedNote, setShowGeneratedNote] = useState(false);
+  const [correctNotes, setCorrectNotes] = useState(0); // New state for correct notes
+  const [totalAttempts, setTotalAttempts] = useState(0); // New state for total attempts
+
   const notes = [];
 
   // Generate all notes from C2 to B6
@@ -54,10 +57,13 @@ useEffect(() => {
 
   if(!midiNote) return;
   
+  setTotalAttempts((prev) => prev + 1); // Increment total attempts
+  
   if (midiNote === randomNote) {
     console.log("Correct!");
     setIsNoteCorrect(true);  // Mark as correct
     setAttempts(0);          // Reset attempts
+    setCorrectNotes((prev) => prev + 1); // Increment correct notes
     generateRandomNote();    // Generate a new random note
   } else {
     console.log("incorrect...", midiNote, randomNote);
@@ -82,6 +88,13 @@ useEffect(() => {
   // This will run every time randomNote changes
   useEffect(() => {
     if (randomNote) {
+      if (midiNote) {
+        console.log("prev note:", midiNote)
+        if (midiNote === randomNote) {
+          console.log("same.. skip");
+          generateRandomNote();
+        }
+      }
       console.log("New randomNote is set: ", randomNote);
     }
   }, [randomNote]);  
@@ -166,10 +179,11 @@ useEffect(() => {
     generateRandomNote();  // Generate the first random note when the component mounts
   }, []);
 
+  // Calculate the score percentage
+  const score = totalAttempts > 0 ? ((correctNotes / totalAttempts) * 100).toFixed(2) : 0;
+
   return (
     <div>
-      <h1>Music Trainer</h1>
-      {/* <button onClick={generateRandomNote}>Generate Random Note</button> */}
       <div id="staff"></div>
 
       {/* Display MIDI note, color red if incorrect */}
@@ -177,6 +191,12 @@ useEffect(() => {
         {(!isNoteCorrect) && midiNote && <p>Note Played: {midiNote}</p>}
         {/* After 3 attempts, display the generated note */}
         {showGeneratedNote && <p className="generated-note">Note: {randomNote}</p>}
+      </div>
+      {/* Display Score and Progress */}
+      <div className="score-board">
+        <p>Correct Notes: {correctNotes}</p>
+        <p>Total Attempts: {totalAttempts}</p>
+        <p>Score: {score}%</p>
       </div>
     </div>
   );

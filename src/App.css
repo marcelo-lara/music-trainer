@@ -28,3 +28,13 @@
   color: #333;
   text-align: center;
 }
+
+.midi-note.incorrect {
+  color: red; /* Display the incorrect note in red */
+}
+
+.generated-note {
+  font-size: 18px;
+  font-weight: bold;
+  color: blue; /* Display the generated note in blue after 3 incorrect attempts */
+}

@@ -1,41 +1,65 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import Vex from "vexflow";
 import './App.css';
 
 const MusicTrainer = () => {
   const [randomNote, setRandomNote] = useState("");
   const [midiNote, setMidiNote] = useState(null);
+  const [isNoteCorrect, setIsNoteCorrect] = useState(null);
+  const [attempts, setAttempts] = useState(0);
+  const [showGeneratedNote, setShowGeneratedNote] = useState(false);
+  const notes = [];
 
-  // Generate a random note function (already defined in your app)
-  const generateRandomNote = () => {
-    const notes = [];
-    const noteNames = ["c", "d", "e", "f", "g", "a", "b"];
-    
-    for (let octave = 2; octave <= 6; octave++) {
-      for (let i = 0; i < noteNames.length; i++) {
-        notes.push(`${noteNames[i]}/${octave}`);
-      }
+  // Generate all notes from C2 to B6
+  const noteNames = ["c", "d", "e", "f", "g", "a", "b"];
+  for (let octave = 2; octave <= 5; octave++) {
+    for (let i = 0; i < noteNames.length; i++) {
+      notes.push(`${noteNames[i]}/${octave}`);
     }
+  }
 
+  // Generate a random note function
+  const generateRandomNote = () => {
     const randomIndex = Math.floor(Math.random() * notes.length);
-    setRandomNote(notes[randomIndex]);
+    const newNote = notes[randomIndex];
+    setRandomNote(newNote);  // Set the random note
+  
+    setAttempts(0);
+    setShowGeneratedNote(false);
   };
 
-  // MIDI Input handler
-  const handleMIDIInput = (midiAccess) => {
+  // MIDI Input handler wrapped in useCallback to prevent unnecessary re-creations
+  const handleMIDIInput = useCallback((midiAccess) => {
     const inputs = midiAccess.inputs.values();
     for (let input of inputs) {
       input.onmidimessage = handleMIDIMessage;
     }
-  };
+  }, []);
 
   const handleMIDIMessage = (message) => {
     const [status, note, velocity] = message.data;
-    if (status === 144 && velocity > 0) {
-      const noteName = convertMIDINoteToNoteName(note);
-      setMidiNote(noteName);
+    if (status === 146 && velocity > 0) {
+      setMidiNote(convertMIDINoteToNoteName(note));  // Store the MIDI note in state
     }
   };
+
+useEffect(() => {
+
+  if(!midiNote) return;
+  
+  if (midiNote === randomNote) {
+    console.log("Correct!");
+    setIsNoteCorrect(true);  // Mark as correct
+    setAttempts(0);          // Reset attempts
+    generateRandomNote();    // Generate a new random note
+  } else {
+    console.log("incorrect...", midiNote, randomNote);
+    setIsNoteCorrect(false); // Mark as incorrect
+    setAttempts((prev) => prev + 1); // Increment incorrect attempt counter
+  }
+
+  
+}, [midiNote]);
 
   const convertMIDINoteToNoteName = (midiNoteNumber) => {
     const noteNames = ["c", "c#", "d", "d#", "e", "f", "f#", "g", "g#", "a", "a#", "b"];
@@ -44,22 +68,22 @@ const MusicTrainer = () => {
     return `${noteNames[noteIndex]}/${octave}`;
   };
 
-  // Compare the MIDI input with the displayed random note
-  useEffect(() => {
-    if (midiNote && randomNote === midiNote) {
-      // If the note matches, generate a new random note
-      generateRandomNote();
-    }
-  }, [midiNote, randomNote]);
-
   useEffect(() => {
     // Set up Web MIDI API
     if (navigator.requestMIDIAccess) {
+      console.log("Requesting MIDI Access...");
       navigator.requestMIDIAccess().then(handleMIDIInput).catch(console.error);
     } else {
       console.error("Web MIDI API is not supported in this browser.");
     }
-  }, []);
+  }, [handleMIDIInput]);
+
+  // This will run every time randomNote changes
+  useEffect(() => {
+    if (randomNote) {
+      console.log("New randomNote is set: ", randomNote);
+    }
+  }, [randomNote]);  
 
   // Render the music stave (as already defined in your app)
   useEffect(() => {
@@ -131,17 +155,27 @@ const MusicTrainer = () => {
     }
   }, [randomNote]);
 
+  useEffect(() => {
+    if (attempts >= 3) {
+      setShowGeneratedNote(true); // Show the generated note after 3 attempts
+    }
+  }, [attempts]);
+
+  useEffect(() => {
+    generateRandomNote();  // Generate the first random note when the component mounts
+  }, []);
+
   return (
     <div>
       <h1>Music Trainer</h1>
-      <button onClick={generateRandomNote}>Generate Random Note</button>
-      
-      {/* Staff container */}
+      {/* <button onClick={generateRandomNote}>Generate Random Note</button> */}
       <div id="staff"></div>
-      
-      {/* MIDI received note display */}
-      <div className="midi-note">
+
+      {/* Display MIDI note, color red if incorrect */}
+      <div className={`midi-note ${isNoteCorrect === false ? 'incorrect' : ''}`}>
         {midiNote && <p>Last MIDI Note Played: {midiNote}</p>}
+        {/* After 3 attempts, display the generated note */}
+        {showGeneratedNote && <p className="generated-note">Note: {randomNote}</p>}
       </div>
     </div>
   );

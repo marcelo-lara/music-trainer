@@ -12,7 +12,7 @@
     "vexflow": "^4.2.5",
     "web-vitals": "^2.1.4"
   },
-  "homepage": "https://Ymarcelo-lara.github.io/music-trainer",
+  "homepage": "https://marcelo-lara.github.io/music-trainer",
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",

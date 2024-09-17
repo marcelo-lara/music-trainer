@@ -37,22 +37,22 @@ const MusicTrainer = () => {
     setShowGeneratedNote(false);
   };
 
+  const handleMIDIMessage = useCallback((message) => {
+    const [status, note, velocity] = message.data;
+    console.log(status, note, velocity);
+    if (status === noteOff && velocity > 0) { // Note On message
+      setMidiNote(convertMIDINoteToNoteName(note));  // Store the MIDI note in state
+    }
+  }, []);
+
   // MIDI Input handler wrapped in useCallback to prevent unnecessary re-creations
   const handleMIDIInput = useCallback((midiAccess) => {
     const inputs = midiAccess.inputs.values();
     for (let input of inputs) {
       input.onmidimessage = handleMIDIMessage;
     }
-  }, []);
-
-  const handleMIDIMessage = (message) => {
-    const [status, note, velocity] = message.data;
-    console.log(status, note, velocity);
-    if (status === noteOff && velocity > 0) {
-      setMidiNote(convertMIDINoteToNoteName(note));  // Store the MIDI note in state
-    }
-  };
-
+  }, [handleMIDIMessage]);
+  
   const convertMIDINoteToNoteName = (midiNoteNumber) => {
     const noteNames = ["c", "c#", "d", "d#", "e", "f", "f#", "g", "g#", "a", "a#", "b"];
     const octave = Math.floor(midiNoteNumber / 12) - 1;

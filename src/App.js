@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import Vex from "vexflow";
 import './App.css';
 
@@ -14,7 +14,7 @@ const MusicTrainer = () => {
   const [elapsedTime, setElapsedTime] = useState(0); // Track time elapsed for each guess
   const [times, setTimes] = useState([]); // Store time for each correct guess
   const [minTime, setMinTime] = useState(null); // Track the minimum time across all guesses
-
+  const midiInitialized = useRef(false); 
   const notes = [];
   const noteOff = 144;
 
@@ -37,21 +37,13 @@ const MusicTrainer = () => {
     setShowGeneratedNote(false);
   };
 
-  const handleMIDIMessage = useCallback((message) => {
+  const handleMIDIMessage = (message) => {
     const [status, note, velocity] = message.data;
     console.log(status, note, velocity);
     if (status === noteOff && velocity > 0) { // Note On message
       setMidiNote(convertMIDINoteToNoteName(note));  // Store the MIDI note in state
     }
-  }, []);
-
-  // MIDI Input handler wrapped in useCallback to prevent unnecessary re-creations
-  const handleMIDIInput = useCallback((midiAccess) => {
-    const inputs = midiAccess.inputs.values();
-    for (let input of inputs) {
-      input.onmidimessage = handleMIDIMessage;
-    }
-  }, [handleMIDIMessage]);
+  };
   
   const convertMIDINoteToNoteName = (midiNoteNumber) => {
     const noteNames = ["c", "c#", "d", "d#", "e", "f", "f#", "g", "g#", "a", "a#", "b"];
@@ -86,16 +78,27 @@ const MusicTrainer = () => {
       setIsNoteCorrect(false);
       setAttempts((prev) => prev + 1); // Increment incorrect attempt counter
     }
-  }, [midiNote, randomNote, startTime, minTime]);
+  }, [midiNote]);
 
   useEffect(() => {
+    if (midiInitialized.current) return;
+
     // Set up Web MIDI API
-    if (navigator.requestMIDIAccess) {
-      navigator.requestMIDIAccess().then(handleMIDIInput).catch(console.error);
+    if (!midiInitialized.current) {
+      midiInitialized.current = true;
+      navigator.requestMIDIAccess().then((midiAccess)=>{    
+        const inputs = midiAccess.inputs.values();
+        console.log("listening to");
+        for (let input of inputs) {
+          console.log(' -', input.name);
+          input.onmidimessage = handleMIDIMessage;
+        }
+
+      }).catch(console.error);
     } else {
       console.error("Web MIDI API is not supported in this browser.");
     }
-  }, [handleMIDIInput]);
+  }, []);
 
   useEffect(() => {
     if (attempts >= 3) {
@@ -187,11 +190,7 @@ const MusicTrainer = () => {
       <div className="results-bar">
         <div className="result-item">
           <p>Correct Notes</p>
-          <p className="big-number">{totalAttempts>0?correctNotes:'-'}</p>
-        </div>
-        <div className="result-item">
-          <p>Total Attempts</p>
-          <p className="big-number">{totalAttempts}</p>
+          <p className="big-number">{totalAttempts>0?correctNotes:'-'}/{totalAttempts}</p>
         </div>
         <div className="result-item">
           <p>Score</p>
@@ -211,30 +210,6 @@ const MusicTrainer = () => {
         </div>
       </div>
     </div>
-
-    // <div>
-    //   <div id="staff"></div>
-
-    //   {/* Display MIDI note, color red if incorrect */}
-    //   <div className={`midi-note ${isNoteCorrect === false ? 'incorrect' : ''}`}>
-    //     {(!isNoteCorrect) && midiNote && <p>Note Played: {midiNote}</p>}
-    //     {showGeneratedNote && <p className="generated-note">Note: {randomNote}</p>}
-    //   </div>
-
-    //   {/* Display Elapsed Time */}
-    //   <div className="time-board">
-    //     <p>Elapsed Time: {elapsedTime.toFixed(2)} seconds</p>
-    //     <p>Average Time (last 4): {averageTime} seconds</p>
-    //     <p>Minimum Time: {minTime ? minTime.toFixed(2) : "-"} seconds</p>
-    //   </div>
-
-    //   {/* Display Score and Progress */}
-    //   <div className="score-board">
-    //     <p>Correct Notes: {correctNotes}</p>
-    //     <p>Total Attempts: {totalAttempts}</p>
-    //     <p>Score: {((correctNotes / totalAttempts) * 100).toFixed(2)}%</p>
-    //   </div>
-    // </div>
   );
 };
 

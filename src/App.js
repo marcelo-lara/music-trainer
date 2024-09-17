@@ -181,29 +181,60 @@ const MusicTrainer = () => {
   const averageTime = times.length > 0 ? (times.reduce((a, b) => a + b, 0) / times.length).toFixed(2) : 0;
 
   return (
-    <div>
-      <div id="staff"></div>
+    <div className="container">
+      <div id="staff" className="grand-staff"></div>
 
-      {/* Display MIDI note, color red if incorrect */}
-      <div className={`midi-note ${isNoteCorrect === false ? 'incorrect' : ''}`}>
-        {(!isNoteCorrect) && midiNote && <p>Note Played: {midiNote}</p>}
-        {showGeneratedNote && <p className="generated-note">Note: {randomNote}</p>}
-      </div>
-
-      {/* Display Elapsed Time */}
-      <div className="time-board">
-        <p>Elapsed Time: {elapsedTime.toFixed(2)} seconds</p>
-        <p>Average Time (last 4): {averageTime} seconds</p>
-        <p>Minimum Time: {minTime ? minTime.toFixed(2) : "-"} seconds</p>
-      </div>
-
-      {/* Display Score and Progress */}
-      <div className="score-board">
-        <p>Correct Notes: {correctNotes}</p>
-        <p>Total Attempts: {totalAttempts}</p>
-        <p>Score: {((correctNotes / totalAttempts) * 100).toFixed(2)}%</p>
+      <div className="results-bar">
+        <div className="result-item">
+          <p>Correct Notes</p>
+          <p className="big-number">{totalAttempts>0?correctNotes:'-'}</p>
+        </div>
+        <div className="result-item">
+          <p>Total Attempts</p>
+          <p className="big-number">{totalAttempts}</p>
+        </div>
+        <div className="result-item">
+          <p>Score</p>
+          <p className="big-number">{totalAttempts>0 ? ((correctNotes / totalAttempts) * 100).toFixed(0) + '%': '-'}</p>
+        </div>
+        <div className="result-item">
+          <p>Elapsed Time</p>
+          <p className="big-number">{elapsedTime ? elapsedTime + 's' : "-"}</p>
+        </div>
+        <div className="result-item">
+          <p>Average Time</p>
+          <p className="big-number">{averageTime ? averageTime +'s' : "-"}</p>
+        </div>
+        <div className="result-item">
+          <p>Best Time</p>
+          <p className="big-number">{minTime ? minTime.toFixed(2)+'s' : "-"}</p>
+        </div>
       </div>
     </div>
+
+    // <div>
+    //   <div id="staff"></div>
+
+    //   {/* Display MIDI note, color red if incorrect */}
+    //   <div className={`midi-note ${isNoteCorrect === false ? 'incorrect' : ''}`}>
+    //     {(!isNoteCorrect) && midiNote && <p>Note Played: {midiNote}</p>}
+    //     {showGeneratedNote && <p className="generated-note">Note: {randomNote}</p>}
+    //   </div>
+
+    //   {/* Display Elapsed Time */}
+    //   <div className="time-board">
+    //     <p>Elapsed Time: {elapsedTime.toFixed(2)} seconds</p>
+    //     <p>Average Time (last 4): {averageTime} seconds</p>
+    //     <p>Minimum Time: {minTime ? minTime.toFixed(2) : "-"} seconds</p>
+    //   </div>
+
+    //   {/* Display Score and Progress */}
+    //   <div className="score-board">
+    //     <p>Correct Notes: {correctNotes}</p>
+    //     <p>Total Attempts: {totalAttempts}</p>
+    //     <p>Score: {((correctNotes / totalAttempts) * 100).toFixed(2)}%</p>
+    //   </div>
+    // </div>
   );
 };
 

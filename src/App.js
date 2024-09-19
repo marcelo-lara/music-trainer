@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useRef } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import Vex from "vexflow";
 import './App.css';
 
@@ -31,6 +31,12 @@ const MusicTrainer = () => {
   const generateRandomNote = () => {
     const randomIndex = Math.floor(Math.random() * notes.length);
     const newNote = notes[randomIndex];
+
+    if (newNote === randomNote) {  // If the new note is the same as the previous note, generate a new note
+      generateRandomNote();
+      return;
+    }
+
     setRandomNote(newNote);  // Set the random note
     setStartTime(Date.now()); // Set start time when new note is generated
     setAttempts(0);
@@ -195,6 +201,15 @@ const MusicTrainer = () => {
         <div className="result-item">
           <p>Score</p>
           <p className="big-number">{totalAttempts>0 ? ((correctNotes / totalAttempts) * 100).toFixed(0) + '%': '-'}</p>
+        </div>
+        <div className="result-item">
+        {showGeneratedNote  && (
+            <>
+              <p>you played</p>
+              <p className="big-number">{midiNote ? midiNote.toUpperCase().replace('/', '') : '-'}</p>
+              <p>note is {randomNote ? randomNote.toUpperCase().replace('/', '') : '-'}</p>
+            </>
+          )}
         </div>
         <div className="result-item">
           <p>Elapsed Time</p>
